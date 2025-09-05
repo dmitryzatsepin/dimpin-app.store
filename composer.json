@@ -1,0 +1,6 @@
+{
+    "require": {
+        "monolog/monolog": "^3.9",
+        "bitrix24/b24phpsdk": "^1.5"
+    }
+}

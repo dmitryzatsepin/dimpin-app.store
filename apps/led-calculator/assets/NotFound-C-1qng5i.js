@@ -1,0 +1,1 @@
+import{j as r,m as e,i as s,T as t}from"./ui-CFZjDxNi.js";import"./vendor-BYOhtk1D.js";const n=()=>r.jsxs(e,{children:[r.jsx(s,{order:2,style:{color:"red"},children:"404 - Страница не найдена"}),r.jsx(t,{children:"Запрашиваемая страница не существует."})]});export{n as default};

@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Маршрутизация для led-calculator-widget
+RewriteRule ^apps/led-calculator-widget/public/(.*)$ apps/led-calculator-widget/public/$1 [L]
+
+# Маршрутизация для led-calculator
+RewriteRule ^apps/led-calculator/(.*)$ apps/led-calculator/$1 [L]
+
+# Все остальные запросы к apps идут на index.php
+RewriteRule ^apps/led-calculator-widget/?$ apps/led-calculator-widget/public/index.php [L,QSA]

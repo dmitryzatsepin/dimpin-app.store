@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Тест LED Калькулятора</title>
+    <meta charset="utf-8">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧮</text></svg>">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+        }
+
+        .test-links {
+            margin-bottom: 20px;
+        }
+
+        .test-links a {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background: #007cba;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .debug-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Тест LED Калькулятора</h1>
+
+    <div class="test-links">
+        <a href="#" onclick="testWidget()">Тест виджета</a>
+        <a href="#" onclick="testCalculator()">Тест калькулятора</a>
+        <a href="#" onclick="testRealParams()">Тест с реальными параметрами</a>
+        <a href="#" onclick="clearLog()">Очистить лог</a>
+        <a href="#" onclick="detailedDiagnostics()" style="background: #dc3545;">ПОДРОБНАЯ ДИАГНОСТИКА</a>
+    </div>
+
+    <div class="status" id="status">Готов к тестированию</div>
+
+    <div class="debug-info" id="debug-log">
+        <strong>Диагностический лог:</strong><br>
+        <span id="log-content">Ожидание тестирования...</span>
+    </div>
+
+    <iframe id="test-frame" src=""></iframe>
+
+    <script>
+        let logContent = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logContent += logEntry;
+
+            const logElement = document.getElementById('log-content');
+            logElement.innerHTML = logContent.replace(/\n/g, '<br>');
+
+            const debugLog = document.getElementById('debug-log');
+            debugLog.className = `debug-info ${type}`;
+
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message + ' - ' + new Date().toLocaleTimeString();
+            log(`Статус: ${message}`, 'info');
+        }
+
+        function clearLog() {
+            logContent = '';
+            document.getElementById('log-content').innerHTML = 'Лог очищен';
+            document.getElementById('debug-log').className = 'debug-info';
+        }
+
+        function detailedDiagnostics() {
+            log('=== ПОДРОБНАЯ ДИАГНОСТИКА IFRAME ===', 'info');
+
+            const iframe = document.getElementById('test-frame');
+            if (!iframe) {
+                log('Iframe не найден!', 'error');
+                return;
+            }
+
+            log(`Iframe src: ${iframe.src}`, 'info');
+            log(`Iframe readyState: ${iframe.contentDocument ? iframe.contentDocument.readyState : 'no access'}`, 'info');
+            log(`Iframe contentWindow: ${iframe.contentWindow ? 'available' : 'not available'}`, 'info');
+
+            // Проверяем содержимое iframe
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc) {
+                    log(`Iframe document title: ${iframeDoc.title}`, 'info');
+                    log(`Iframe document URL: ${iframeDoc.URL}`, 'info');
+                    log(`Iframe document readyState: ${iframeDoc.readyState}`, 'info');
+
+                    // Проверяем body
+                    const body = iframeDoc.body;
+                    if (body) {
+                        log(`Iframe body exists: ${body ? 'yes' : 'no'}`, 'info');
+                        log(`Iframe body innerHTML length: ${body.innerHTML.length}`, 'info');
+                        log(`Iframe body first 200 chars: ${body.innerHTML.substring(0, 200)}`, 'info');
+                    } else {
+                        log('Iframe body is null!', 'error');
+                    }
+
+                    // Проверяем root div
+                    const rootDiv = iframeDoc.getElementById('root');
+                    if (rootDiv) {
+                        log('Root div найден в iframe!', 'success');
+                        log(`Root div innerHTML length: ${rootDiv.innerHTML.length}`, 'info');
+                        log(`Root div first 200 chars: ${rootDiv.innerHTML.substring(0, 200)}`, 'info');
+                    } else {
+                        log('Root div НЕ найден в iframe!', 'error');
+                    }
+
+                    // Проверяем ошибки
+                    const errorElements = iframeDoc.querySelectorAll('h1, h2, h3, .error, .not-found');
+                    if (errorElements.length > 0) {
+                        log(`Найдено ${errorElements.length} элементов с ошибками:`, 'error');
+                        errorElements.forEach((el, index) => {
+                            log(`Ошибка ${index + 1}: ${el.textContent}`, 'error');
+                        });
+                    }
+
+                    // Проверяем все элементы с текстом
+                    const allElements = iframeDoc.querySelectorAll('*');
+                    log(`Всего элементов в iframe: ${allElements.length}`, 'info');
+
+                    // Ищем элементы с текстом "404" или "не найдена"
+                    const errorTextElements = Array.from(allElements).filter(el =>
+                        el.textContent && (
+                            el.textContent.includes('404') ||
+                            el.textContent.includes('не найдена') ||
+                            el.textContent.includes('not found')
+                        )
+                    );
+
+                    if (errorTextElements.length > 0) {
+                        log(`Найдено ${errorTextElements.length} элементов с текстом ошибки:`, 'error');
+                        errorTextElements.forEach((el, index) => {
+                            log(`Ошибка ${index + 1}: ${el.textContent.trim()}`, 'error');
+                        });
+                    }
+
+                } else {
+                    log('Не удалось получить доступ к iframe document (CORS)', 'warning');
+                }
+            } catch (error) {
+                log(`Ошибка доступа к iframe: ${error.message}`, 'error');
+            }
+        }
+
+        function testWidget() {
+            log('=== НАЧАЛО ТЕСТА ВИДЖЕТА ===', 'info');
+            updateStatus('Тестирую виджет...');
+
+            const url = '/apps/led-calculator-widget/public/index.php?PLACEMENT=CRM_DEAL_DETAIL_ACTIVITY&ID=5230&member_id=test&AUTH_ID=test&DOMAIN=test.bitrix24.ru';
+            log(`URL виджета: ${url}`, 'info');
+
+            // Проверяем доступность виджета
+            fetch(url)
+                .then(response => {
+                    log(`Виджет HTTP статус: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    return response.text();
+                })
+                .then(html => {
+                    log(`Виджет размер ответа: ${html.length} байт`, 'info');
+                    if (html.includes('iframe')) {
+                        log('Виджет содержит iframe - OK', 'success');
+
+                        // Извлекаем src из iframe виджета
+                        const iframeMatch = html.match(/src="([^"]+)"/);
+                        if (iframeMatch) {
+                            const calculatorUrl = iframeMatch[1];
+                            log(`Найден URL калькулятора в виджете: ${calculatorUrl}`, 'success');
+
+                            // Загружаем калькулятор в iframe
+                            document.getElementById('test-frame').src = calculatorUrl;
+                            log('Калькулятор загружен в iframe', 'info');
+                        } else {
+                            log('Не удалось найти URL калькулятора в виджете', 'error');
+                            document.getElementById('test-frame').src = url;
+                        }
+                    } else {
+                        log('Виджет НЕ содержит iframe - ОШИБКА', 'error');
+                        document.getElementById('test-frame').src = url;
+                    }
+                })
+                .catch(error => {
+                    log(`Ошибка загрузки виджета: ${error.message}`, 'error');
+                    document.getElementById('test-frame').src = url;
+                });
+
+            log('Iframe src установлен', 'info');
+        }
+
+        function testCalculator() {
+            log('=== НАЧАЛО ТЕСТА КАЛЬКУЛЯТОРА ===', 'info');
+            updateStatus('Тестирую калькулятор...');
+
+            const url = '/apps/led-calculator/index.html?dealId=5230&domain=ledts.bitrix24.ru';
+            log(`URL калькулятора: ${url}`, 'info');
+
+            // Проверяем доступность калькулятора
+            fetch(url)
+                .then(response => {
+                    log(`Калькулятор HTTP статус: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    return response.text();
+                })
+                .then(html => {
+                    log(`Калькулятор размер ответа: ${html.length} байт`, 'info');
+                    if (html.includes('Calculator')) {
+                        log('Калькулятор содержит правильный title - OK', 'success');
+                    } else {
+                        log('Калькулятор НЕ содержит правильный title - ОШИБКА', 'error');
+                    }
+                })
+                .catch(error => {
+                    log(`Ошибка загрузки калькулятора: ${error.message}`, 'error');
+                });
+
+            document.getElementById('test-frame').src = url;
+            log('Iframe src установлен', 'info');
+        }
+
+        function testRealParams() {
+            log('=== НАЧАЛО ТЕСТА С РЕАЛЬНЫМИ ПАРАМЕТРАМИ ===', 'info');
+            updateStatus('Тестирую с реальными параметрами...');
+
+            const url = '/apps/led-calculator-widget/public/index.php?PLACEMENT=CRM_DEAL_DETAIL_ACTIVITY&ID=5230&member_id=2ed3b3005a7c2a8f82e51326f960a106&AUTH_ID=test123&DOMAIN=ledts.bitrix24.ru';
+            log(`URL с реальными параметрами: ${url}`, 'info');
+
+            document.getElementById('test-frame').src = url;
+            log('Iframe src установлен', 'info');
+        }
+
+        // Автоматически загружаем виджет при открытии страницы
+        window.onload = function () {
+            log('Страница загружена', 'success');
+            updateStatus('Страница загружена');
+            testWidget();
+        };
+
+        // Обработка загрузки iframe
+        document.getElementById('test-frame').onload = function () {
+            log('Iframe загружен успешно', 'success');
+            updateStatus('Iframe загружен успешно');
+
+            try {
+                const iframe = document.getElementById('test-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+                if (iframeDoc) {
+                    log(`Iframe title: ${iframeDoc.title}`, 'info');
+                    log(`Iframe URL: ${iframeDoc.URL}`, 'info');
+
+                    // Проверяем содержимое iframe
+                    const rootDiv = iframeDoc.getElementById('root');
+                    if (rootDiv) {
+                        log('Root div найден в iframe', 'success');
+                        log(`Root div содержимое: ${rootDiv.innerHTML.substring(0, 200)}...`, 'info');
+
+                        if (rootDiv.innerHTML.includes('Calculator')) {
+                            log('React приложение загружено!', 'success');
+                        } else if (rootDiv.innerHTML.trim() === '') {
+                            log('Root div пустой - React не рендерится!', 'error');
+                        } else {
+                            log('Root div содержит что-то другое', 'warning');
+                        }
+                    } else {
+                        log('Root div НЕ найден в iframe!', 'error');
+                    }
+
+                    // Проверяем ошибки в консоли iframe
+                    const scripts = iframeDoc.querySelectorAll('script');
+                    log(`Найдено скриптов: ${scripts.length}`, 'info');
+
+                    if (iframeDoc.title.includes('404')) {
+                        log('Iframe содержит 404 ошибку!', 'error');
+                    } else if (iframeDoc.title.includes('Calculator')) {
+                        log('Iframe загрузил калькулятор успешно!', 'success');
+                    } else {
+                        log(`Iframe загрузил: ${iframeDoc.title}`, 'warning');
+                    }
+                } else {
+                    log('Не удалось получить доступ к содержимому iframe (CORS)', 'warning');
+                }
+            } catch (error) {
+                log(`Ошибка доступа к iframe: ${error.message}`, 'error');
+            }
+        };
+
+        // Обработка ошибок iframe
+        document.getElementById('test-frame').onerror = function () {
+            log('Ошибка загрузки iframe', 'error');
+            updateStatus('Ошибка загрузки iframe');
+        };
+
+        // Дополнительная диагностика каждые 2 секунды
+        setInterval(function () {
+            const iframe = document.getElementById('test-frame');
+            if (iframe && iframe.src) {
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc && iframeDoc.title) {
+                        if (iframeDoc.title.includes('404')) {
+                            log('Обнаружена 404 ошибка в iframe!', 'error');
+                        }
+                    }
+                } catch (error) {
+                    // CORS ошибка - нормально
+                }
+
+                // Проверяем видимость iframe
+                const rect = iframe.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(iframe);
+
+                log(`Iframe размеры: ${rect.width}x${rect.height}`, 'info');
+                log(`Iframe display: ${computedStyle.display}`, 'info');
+                log(`Iframe visibility: ${computedStyle.visibility}`, 'info');
+                log(`Iframe opacity: ${computedStyle.opacity}`, 'info');
+                log(`Iframe z-index: ${computedStyle.zIndex}`, 'info');
+
+                // ПОДРОБНАЯ ДИАГНОСТИКА IFRAME
+                log(`=== ПОДРОБНАЯ ДИАГНОСТИКА IFRAME ===`, 'info');
+                log(`Iframe src: ${iframe.src}`, 'info');
+                log(`Iframe readyState: ${iframe.contentDocument ? iframe.contentDocument.readyState : 'no access'}`, 'info');
+                log(`Iframe contentWindow: ${iframe.contentWindow ? 'available' : 'not available'}`, 'info');
+
+                // Проверяем содержимое iframe
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc) {
+                        log(`Iframe document title: ${iframeDoc.title}`, 'info');
+                        log(`Iframe document URL: ${iframeDoc.URL}`, 'info');
+                        log(`Iframe document readyState: ${iframeDoc.readyState}`, 'info');
+
+                        // Проверяем body
+                        const body = iframeDoc.body;
+                        if (body) {
+                            log(`Iframe body exists: ${body ? 'yes' : 'no'}`, 'info');
+                            log(`Iframe body innerHTML length: ${body.innerHTML.length}`, 'info');
+                            log(`Iframe body first 200 chars: ${body.innerHTML.substring(0, 200)}`, 'info');
+                        } else {
+                            log('Iframe body is null!', 'error');
+                        }
+
+                        // Проверяем root div
+                        const rootDiv = iframeDoc.getElementById('root');
+                        if (rootDiv) {
+                            log('Root div найден в iframe!', 'success');
+                            log(`Root div innerHTML length: ${rootDiv.innerHTML.length}`, 'info');
+                            log(`Root div first 200 chars: ${rootDiv.innerHTML.substring(0, 200)}`, 'info');
+                        } else {
+                            log('Root div НЕ найден в iframe!', 'error');
+                        }
+
+                        // Проверяем ошибки
+                        const errorElements = iframeDoc.querySelectorAll('h1, h2, h3, .error, .not-found');
+                        if (errorElements.length > 0) {
+                            log(`Найдено ${errorElements.length} элементов с ошибками:`, 'error');
+                            errorElements.forEach((el, index) => {
+                                log(`Ошибка ${index + 1}: ${el.textContent}`, 'error');
+                            });
+                        }
+                    } else {
+                        log('Не удалось получить доступ к iframe document (CORS)', 'warning');
+                    }
+                } catch (error) {
+                    log(`Ошибка доступа к iframe: ${error.message}`, 'error');
+                }
+
+                if (rect.width === 0 || rect.height === 0) {
+                    log('Iframe имеет нулевые размеры!', 'error');
+                }
+
+                if (computedStyle.display === 'none') {
+                    log('Iframe скрыт (display: none)!', 'error');
+                }
+
+                if (computedStyle.visibility === 'hidden') {
+                    log('Iframe невидим (visibility: hidden)!', 'error');
+                }
+            }
+        }, 2000);
+    </script>
+</body>
+
+</html>
